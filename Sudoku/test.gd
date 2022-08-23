@@ -32,7 +32,7 @@ var startPuzzle = [
 	[6,0,7,0,0,5,0,9,0],
 	[0,8,0,7,0,0,0,0,0],
 	[7,0,9,4,0,0,0,0,1],
-	[0,0,8,0,0,0,0,0,0],
+	[0,0,8,0,0,0,3,0,0],
 	[0,0,0,0,0,2,4,0,0]
 	]
 
@@ -42,6 +42,7 @@ func _ready():
 	cellTable = makeGrid()
 	populateTable()
 	initiaiseGrid()
+	recFill()
 	
 	
 
@@ -49,8 +50,7 @@ func _ready():
 #Called every frame. 'delta' is the elapsed time since the previous frame.
 func _process(delta):
 	if (Input.is_action_just_pressed("ui_accept")):
-		randomGridStart()
-		#getNewVal()
+		recSolve()
 	if (Input.is_action_just_pressed("ui_down")):
 		initiaiseGrid()
 
@@ -58,7 +58,7 @@ func initiaiseGrid():
 	
 	possibleVal.clear()
 	position = startingPosition
-	numberTable = makeGrid()
+	numberTable = baseGrid
 	
 	possibleVal = populateValues()
 	
@@ -250,13 +250,20 @@ func recSolve():
 	printGrid(numberTable)
 	return
 
-
-			
-			
-			
-			
-			
-			
+func recFill():
+	for x in 9:
+		for y in 9:
+			var num = [1,2,3,4,5,6,7,8,9]
+			num.shuffle()
+			if numberTable[x][y] == 0:
+				for i in num.size():
+					if possible(x,y,num[i]):
+						numberTable[x][y] = num[i]
+						recFill()
+				numberTable[x][y] = 0
+				return
+	printGrid(numberTable)
+	return
 
 func populateTable():
 	var row_offset = 0
