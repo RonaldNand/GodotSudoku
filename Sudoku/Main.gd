@@ -9,44 +9,224 @@ export (PackedScene) var cell
 var length = 9
 var numberTable = []
 var cellTable = []
+var possibleVal = []
+var solutions = []
 var startingPosition = Vector2(25,25)
+var target = 20
+var counter = 0
+
+var baseGrid = [
+	[0,0,0,0,0,0,0,0,0],
+	[0,0,0,0,0,0,0,0,0],
+	[0,0,0,0,0,0,0,0,0],
+	[0,0,0,0,0,0,0,0,0],
+	[0,0,0,0,0,0,0,0,0],
+	[0,0,0,0,0,0,0,0,0],
+	[0,0,0,0,0,0,0,0,0],
+	[0,0,0,0,0,0,0,0,0],
+	[0,0,0,0,0,0,0,0,0]
+	]
 
 var startPuzzle = [
-	[5,3,6,9,1,8,0,2,3],
-	[7,1,3,6,0,2,0,4,9],
-	[0,8,0,0,0,0,0,5,1],
-	[6,0,4,0,0,0,0,0,2],
-	[0,2,7,8,6,0,0,0,0],
-	[0,0,0,0,0,4,1,0,0],
-	[3,0,0,1,4,0,2,0,0],
-	[0,0,0,5,0,6,3,0,8],
-	[0,7,0,0,0,0,0,0,6]
+	[2,9,5,7,4,3,8,6,1],
+	[4,3,1,8,6,5,9,0,0],
+	[8,7,6,1,9,2,5,4,3],
+	[3,8,7,4,5,9,2,1,6],
+	[6,1,2,3,8,7,4,9,5],
+	[5,4,9,2,1,6,7,3,8],
+	[7,6,3,5,2,4,1,8,9],
+	[9,2,8,6,7,1,3,5,4],
+	[1,5,4,9,3,8,6,0,0]
 	]
 
 # Called when the node enters the scene tree for the first time.
 func _ready():
-	position = startingPosition
-	numberTable = getTable()
-	cellTable = getTable()
-	populateTable()
-	print (numberTable)
+	randomize()
+	
+	
+	initialiseGrid()
+	
+	
 
 
 #Called every frame. 'delta' is the elapsed time since the previous frame.
 func _process(delta):
-	updateCells()
-	checkErrors()
 	if (Input.is_action_just_pressed("ui_accept")):
-		print(numberTable)
+		generatePuzzle()
+	if (Input.is_action_just_pressed("ui_down")):
+		initialiseGrid()
+#	if (Input.is_action_just_pressed("ui_right")):
+	updateCells()
+	
+#
 
-func getTable():
+func initialiseGrid():
+	
+	get_tree().call_group("cell","queue_free")
+	
+	possibleVal.clear()
+	position = startingPosition
+	#numberTable = startPuzzle
+	numberTable = baseGrid.duplicate(true)
+	generatePuzzle()
+	
+	cellTable = baseGrid.duplicate(true)
+	populateTable()
+	
+	possibleVal = populateValues()
+	
+	getNewVal()
+	
+	updateCells()
+
+func printGrid(grid):
+	for x in 9:
+		print(grid[x])
+	print("Break")
+
+func makeGrid():
+	var grid = []
+	for x in 9:
+		grid.append([])
+		for y in 9:
+			grid[x].append(0)
+	return grid
+
+func possible(x,y,n):
+	var result = false
+	for i in 9:
+		if numberTable[x][i] == n:
+			return result
+	for i in 9:
+		if numberTable[i][y] == n:
+			return result
+	var gridX = (x / 3) * 3
+	var gridY = (y / 3) * 3
+	for i in 3:
+		for j in 3:
+			if numberTable[i+gridX][j+gridY] == n:
+				return result
+	result = true
+	return result
+
+func checkCorrectness():
+	for x in 9:
+		for i in range (1,10):
+			if numberTable[x].count(i) > 1:
+				print ("error in row " + str(x))
+				return false
+	for y in 9:
+		var col = []
+		for x in 9:
+			col.append(numberTable[x][y])
+		for i in range (1,10):
+			if col.count(i) > 1:
+				print ("error in column " + str(y))
+				return false
+	for x in 9:
+		var grid = []
+		var gridX = 0 + (x/3) * 3
+		var gridY = 0 + (x%3) * 3
+		for i in 3:
+			for j in 3:
+				grid.append(numberTable[i + gridX][j+gridY])
+		for i in range (1,10):
+			if grid.count(i) > 1:
+				print ("error in grid " + str(x))
+				return false
+
+func populateValues():
 	var table = []
-	for x in range (0,length):
+	for x in 81:
 		table.append([])
-		for y in range (0,length):
-			table[x].append(0)
 	return table
+	
+func getNewVal():
+	
+	for x in 9:
+		for y in 9:
+			var value = []
+			var index
+			if numberTable[x][y] != 0:
+				continue
+			for i in range (1,10):
+				if possible(x,y,i):
+					value.append(i)
+			index = (x * 9) + y
+			possibleVal[index] = value
+	
 
+func recSolve():
+	
+	for x in 9:
+		for y in 9:
+			if numberTable[x][y] != 0:
+				continue
+			for i in range (1,10):
+				if possible(x,y,i):
+					numberTable[x][y] = i
+					recSolve()
+					if solutions.size() > 1:
+						print("Too Many Solutions!")
+						return false
+			numberTable[x][y] = 0
+			return 
+	printGrid(numberTable)
+	solutions.append(numberTable.duplicate(true))
+	return true
+
+func recFill():
+	for x in 9:
+		for y in 9:
+			var num = [1,2,3,4,5,6,7,8,9]
+			num.shuffle()
+			if numberTable[x][y] == 0:
+				for i in num.size():
+					if possible(x,y,num[i]):
+						numberTable[x][y] = num[i]
+						if recFill():
+							return true
+				numberTable[x][y] = 0
+				return
+	printGrid(numberTable)
+	return true
+
+func generatePuzzle():
+	recFill()
+	target = 50
+	counter = 0
+	removeNumber()
+	counter = 0
+
+func removeNumber():
+	if counter >= target:
+		return
+	var table = numberTable.duplicate(true)
+	var filledCells = []
+	for x in 9:
+		for y in 9:
+			if numberTable[x][y] != 0:
+				filledCells.append((x * 9) + y)
+	for x in filledCells.size():
+		var index = filledCells[randi() % filledCells.size() - 1]
+		var newX = index / 9
+		var newY = index % 9
+		numberTable[newX][newY] = 0
+		recSolve()
+		if solutions.size() > 1:
+			numberTable = table.duplicate(true)
+			solutions.clear()
+			filledCells.remove(index)
+			continue
+		else:
+			counter += 1
+			removeNumber()
+			if counter >= target:
+				return
+			
+	
+			
+		
 func populateTable():
 	var row_offset = 0
 	var col_offset = 0
@@ -56,15 +236,23 @@ func populateTable():
 			row_offset = y * 64
 			cellTable[x][y] = cell.instance()
 			cellTable[x][y].position += Vector2(row_offset, col_offset)
+			if x == 0:
+				cellTable[x][y].thickTop = true
+			if x == 8 || x == 2 || x == 5:
+				cellTable[x][y].thickBottom = true
+			if y == 0: 
+				cellTable[x][y].thickLeft = true
+			if y == 8 || y == 2 || y == 5:
+				cellTable[x][y].thickRight = true
 			add_child(cellTable[x][y])
-	updateCells()
+			
+	for x in 9:
+		for y in 9:
+			if numberTable[x][y] != 0:
+				cellTable[x][y].locked = true
+				
 	connectButton()
-
-func updateCells():
-	for x in length:
-		for y in length:
-			cellTable[x][y].value = numberTable[x][y]
-
+			
 func connectButton():
 	for x in length:
 		for y in length:
@@ -74,63 +262,38 @@ func connectButton():
 func updateCell(x,y):
 	var number = $NumberSelector.selectedNumber 
 	var pencil = $NumberSelector.pencil
-	if pencil:
+	var eraser = $NumberSelector.eraser 
+	if eraser:
 		numberTable[x][y] = 0
-		if cellTable[x][y].get_child(1).get_child(number-1).is_visible():
-			cellTable[x][y].get_child(1).get_child(number-1).hide()
+		cellTable[x][y].pencil.clear()
+	elif pencil:
+		numberTable[x][y] = 0
+		var index = cellTable[x][y].pencil.find(number)
+		if index >= 0:
+			cellTable[x][y].pencil.remove(index)
 		else:
-			cellTable[x][y].get_child(1).get_child(number-1).show()
+			cellTable[x][y].pencil.append(number)
 	else:
 		numberTable[x][y] = number
-		
+		cellTable[x][y].pencil.clear()
+	updateCells()
 
-func checkErrors():
-	checkRows()
-	checkColumns()
-	for grid in 9:
-		checkSquare(grid)
-
-func checkRows():
+func updateCells():
 	for x in length:
-		for num in range (1,10):
-			var numCount = 0
-			for y in length:
-				if numberTable[x][y] == num:
-					numCount += 1
-			if numCount >= 2:
-				print ("Error in line "+ str(x))
-				return 1
+		for y in length:
+			cellTable[x][y].value = numberTable[x][y]
+#	for x in 81:
+#		var newX = x / 9
+#		var newY = x % 9
+#		cellTable[newX][newY].pencil = possibleVal[x]
 
-func checkColumns():
-	for y in length:
-		for num in range (1,10):
-			if num == 0:
-				continue
-			var numCount = 0
-			for x in length:
-				if numberTable[x][y] == num:
-					numCount += 1
-			if numCount >= 2:
-				print ("Error in column "+ str(y))
-				return 1
-
-func checkSquare(grid):
-	var xRange = []
-	var yRange = []
-	var yFactor = grid / 3
-	var xFactor = grid % 3
-	var debug
-
-	xRange = [(0 + (3 * xFactor)),(2 + (3 * xFactor))]
-	yRange = [(0 + (3 * yFactor)),(2 + (3 * yFactor))]
+func _on_NumberSelector_numberChanged():
+	for x in 9:
+		for y in 9:
+			if cellTable[x][y].value == $NumberSelector.selectedNumber: 
+				cellTable[x][y].highlight = true
+			else:
+				if cellTable[x][y].highlight:
+					cellTable[x][y].highlight = false
 	
-	for num in range (1,10):
-			var numCount = 0
-			for x in range (xRange[0],xRange[1]+1):
-				for y in range (yRange[0],yRange[1]+1):
-					debug = numberTable[x][y]
-					if numberTable[x][y] == num:
-						numCount += 1
-			if numCount >= 2:
-				print ("Error in grid "+ str(grid))
-				return 1
+				 
