@@ -45,10 +45,15 @@ func _process(delta):
 					$Pencil.get_child(x-1).hide()
 		else:
 			hidePencil()
-	if highlight:
-		$Highlight.show()
-	else:
+	if error:
 		$Highlight.hide()
+		$Error.show()
+	else:
+		$Error.hide()	
+		if highlight:
+			$Highlight.show()
+		else:
+			$Highlight.hide()
 
 func hidePencil():
 	for x in $Pencil.get_child_count():

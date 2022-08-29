@@ -8,7 +8,7 @@ var selectedNumber = null
 var pencil = false
 var eraser = false
 
-signal numberChanged
+signal resetGrid
 
 # Called when the node enters the scene tree for the first time.
 func _ready():
@@ -55,3 +55,7 @@ func initialize():
 			get_child(x).connect("pressed",self,"selectNumber",[x+1])
 	get_child(9).connect("pressed",self,"togglePencil")
 	get_child(10).connect("pressed",self,"selectEraser")
+
+
+func _on_Reset_pressed():
+	emit_signal("resetGrid")

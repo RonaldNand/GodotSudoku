@@ -10,4 +10,4 @@ cell = ExtResource( 2 )
 
 [node name="NumberSelector" parent="." instance=ExtResource( 3 )]
 
-[connection signal="numberChanged" from="NumberSelector" to="." method="_on_NumberSelector_numberChanged"]
+[connection signal="resetGrid" from="NumberSelector" to="." method="_on_NumberSelector_resetGrid"]

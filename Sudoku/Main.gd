@@ -11,6 +11,7 @@ var numberTable = []
 var cellTable = []
 var possibleVal = []
 var solutions = []
+var puzzle = []
 var startingPosition = Vector2(25,25)
 var target = 20
 var counter = 0
@@ -109,12 +110,21 @@ func possible(x,y,n):
 	result = true
 	return result
 
+
+
 func checkCorrectness():
+	for x in 9:
+		for y in 9:
+			cellTable[x][y].error = false
+			
 	for x in 9:
 		for i in range (1,10):
 			if numberTable[x].count(i) > 1:
 				print ("error in row " + str(x))
-				return false
+				for j in 9:
+					if cellTable[x][j].value == i:
+						cellTable[x][j].error = true
+				#return false
 	for y in 9:
 		var col = []
 		for x in 9:
@@ -122,7 +132,10 @@ func checkCorrectness():
 		for i in range (1,10):
 			if col.count(i) > 1:
 				print ("error in column " + str(y))
-				return false
+				for j in 9:
+					if cellTable[j][y].value == i:
+						cellTable[j][y].error = true
+				#return false
 	for x in 9:
 		var grid = []
 		var gridX = 0 + (x/3) * 3
@@ -132,8 +145,15 @@ func checkCorrectness():
 				grid.append(numberTable[i + gridX][j+gridY])
 		for i in range (1,10):
 			if grid.count(i) > 1:
+				for o in 3:
+					for p in 3:
+						if cellTable[o + gridX][p+gridY].value == i:
+							cellTable[o + gridX][p+gridY].error = true
 				print ("error in grid " + str(x))
-				return false
+				#return false
+				
+
+	
 
 func populateValues():
 	var table = []
@@ -196,6 +216,7 @@ func generatePuzzle():
 	target = 50
 	counter = 0
 	removeNumber()
+	puzzle = numberTable.duplicate(true)
 	counter = 0
 
 func removeNumber():
@@ -257,7 +278,7 @@ func connectButton():
 	for x in length:
 		for y in length:
 			if !cellTable[x][y].locked:
-				cellTable[x][y].get_child(2).connect("pressed",self,"updateCell",[x,y])
+				cellTable[x][y].get_child(4).connect("pressed",self,"updateCell",[x,y])
 
 func updateCell(x,y):
 	var number = $NumberSelector.selectedNumber 
@@ -282,12 +303,6 @@ func updateCells():
 	for x in length:
 		for y in length:
 			cellTable[x][y].value = numberTable[x][y]
-#	for x in 81:
-#		var newX = x / 9
-#		var newY = x % 9
-#		cellTable[newX][newY].pencil = possibleVal[x]
-
-func _on_NumberSelector_numberChanged():
 	for x in 9:
 		for y in 9:
 			if cellTable[x][y].value == $NumberSelector.selectedNumber: 
@@ -295,5 +310,11 @@ func _on_NumberSelector_numberChanged():
 			else:
 				if cellTable[x][y].highlight:
 					cellTable[x][y].highlight = false
-	
-				 
+	checkCorrectness()
+
+
+func _on_NumberSelector_resetGrid():
+	numberTable = puzzle.duplicate(true)
+	for x in 9:
+		for y in 9:
+			cellTable[x][y].pencil.clear()

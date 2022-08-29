@@ -89,3 +89,12 @@ margin_left = 448.0
 margin_top = 768.0
 margin_right = 512.0
 margin_bottom = 832.0
+
+[node name="Reset" type="Button" parent="."]
+margin_left = 216.0
+margin_top = 928.0
+margin_right = 228.0
+margin_bottom = 948.0
+text = "Reset"
+
+[connection signal="pressed" from="Reset" to="." method="_on_Reset_pressed"]
