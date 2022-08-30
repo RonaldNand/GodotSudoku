@@ -32,7 +32,7 @@ func _ready():
 
 func _process(delta):
 	#get_input()
-	if (value != 0):
+	if value != 0:
 		$Border/Field.text = str(value)
 		hidePencil()
 	else:

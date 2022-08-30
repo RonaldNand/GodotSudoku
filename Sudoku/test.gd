@@ -1,19 +1,25 @@
 extends Node2D
 
 
-# Declare member variables here. Examples:
-# var a = 2
-# var b = "text"
-
 export (PackedScene) var cell
-var length = 9
-var numberTable = []
+var length = 8
+var grid = []
 var cellTable = []
-var possibleVal = []
-var solutions = []
+var explored = []
 var startingPosition = Vector2(25,25)
-var target = 20
-var counter = 0
+var solution = []
+
+var north = [-1,0]
+var east = [0,1]
+var south = [1,0]
+var west = [0,-1]
+var northEast = [-1,1]
+var northWest = [-1,-1]
+var southEast = [1,1]
+var southWest = [1,-1]
+
+
+
 
 var baseGrid = [
 	[0,0,0,0,0,0,0,0,0],
@@ -42,188 +48,148 @@ var startPuzzle = [
 # Called when the node enters the scene tree for the first time.
 func _ready():
 	randomize()
-	cellTable = baseGrid.duplicate(true)
-	populateTable()
-	initiaiseGrid()
-	
+	initialise()
+	createGrid()
+	updateGrid()
+	printGrid(grid)
 	
 
 
 #Called every frame. 'delta' is the elapsed time since the previous frame.
 func _process(delta):
 	if (Input.is_action_just_pressed("ui_accept")):
-		generatePuzzle()
-		updateCells()
-	if (Input.is_action_just_pressed("ui_down")):
-		initiaiseGrid()
-#	if (Input.is_action_just_pressed("ui_right")):
-#
-
-func initiaiseGrid():
-	
-	possibleVal.clear()
-	position = startingPosition
-	#numberTable = startPuzzle
-	numberTable = baseGrid.duplicate(true)
-	
-	
-	possibleVal = populateValues()
-	
-	
-	getNewVal()
-	
-	updateCells()
+		#paint(5,0,"add")
+		solution.clear()
+		explored.clear()
+		fillTents()
+		updateGrid()
+		printGrid(grid)
+	if Input.is_action_just_pressed("ui_down"):
+		fillTrees()
+		updateGrid()
 
 func printGrid(grid):
-	for x in 9:
+	for x in length:
 		print(grid[x])
 	print("Break")
 
-func makeGrid():
-	var grid = []
-	for x in 9:
+func initialise():
+	#Create LengthxLength Grid of Blank Spaces
+	##########
+	for x in length:
 		grid.append([])
-		for y in 9:
-			grid[x].append(0)
-	return grid
-
-func possible(x,y,n):
-	var result = false
-	for i in 9:
-		if numberTable[x][i] == n:
-			return result
-	for i in 9:
-		if numberTable[i][y] == n:
-			return result
-	var gridX = (x / 3) * 3
-	var gridY = (y / 3) * 3
-	for i in 3:
-		for j in 3:
-			if numberTable[i+gridX][j+gridY] == n:
-				return result
-	result = true
-	return result
-
-func checkCorrectness():
-	for x in 9:
-		for i in range (1,10):
-			if numberTable[x].count(i) > 1:
-				print ("error in row " + str(x))
-				return false
-	for y in 9:
-		var col = []
-		for x in 9:
-			col.append(numberTable[x][y])
-		for i in range (1,10):
-			if col.count(i) > 1:
-				print ("error in column " + str(y))
-				return false
-	for x in 9:
-		var grid = []
-		var gridX = 0 + (x/3) * 3
-		var gridY = 0 + (x%3) * 3
-		for i in 3:
-			for j in 3:
-				grid.append(numberTable[i + gridX][j+gridY])
-		for i in range (1,10):
-			if grid.count(i) > 1:
-				print ("error in grid " + str(x))
-				return false
-
-func populateValues():
-	var table = []
-	for x in 81:
-		table.append([])
-	return table
+		for y in length:
+			grid[x].append("Bl")
+	#Generate a random number of Trees in the Grid in random order
+	###########
+	fillTrees()
+	#setTrees()
+	#Attempt to fill board with tents. 
+	##########
+	#fillTents()
 	
-func getNewVal():
-	
-	for x in 9:
-		for y in 9:
-			var value = []
-			var index
-			if numberTable[x][y] != 0:
-				continue
-			for i in range (1,10):
-				if possible(x,y,i):
-					value.append(i)
-			index = (x * 9) + y
-			possibleVal[index] = value
-	updateCells()
 
+func fillTrees():
+	var rows = [1,2,3,1,2,0,2,1]
+	rows.shuffle()
+	for x in length:
+		var line = []
+		for i in rows[x]:
+			line.append("Tr")
+		while line.size() < length:
+			line.append("Bl")
+		line.shuffle()
+		grid[x] = line.duplicate(true)
 
-func recSolve():
-	
-	for x in 9:
-		for y in 9:
-			if numberTable[x][y] != 0:
-				continue
-			for i in range (1,10):
-				if possible(x,y,i):
-					numberTable[x][y] = i
-					recSolve()
-					if solutions.size() > 1:
-						#print("Too Many Solutions!")
-						return false
-			numberTable[x][y] = 0
-			return 
-	#printGrid(numberTable)
-	solutions.append(numberTable.duplicate(true))
-	return true
+func setTrees():
+	for x in length:
+		for y in length:
+			if x == 1 && y == 1:
+				grid[x][y] = "Tr"
+			if x == 4 && y == 4:
+				grid[x][y] = "Tr"
+			if x == 6 && y == 6:
+				grid[x][y] = "Tr"
 
-func recFill():
-	for x in 9:
-		for y in 9:
-			var num = [1,2,3,4,5,6,7,8,9]
-			num.shuffle()
-			if numberTable[x][y] == 0:
-				for i in num.size():
-					if possible(x,y,num[i]):
-						numberTable[x][y] = num[i]
-						if recFill():
-							return true
-				numberTable[x][y] = 0
+func fillTents():
+	for x in length:
+		for y in length:
+			#Go through each tree in Grid
+			if grid[x][y] == "Tr":
+				#Skip Trees already explored.
+				if explored.has([x,y]):
+					continue 
+				#Choose valid directions to explore
+				var directions = []
+				if x != 0:
+					directions.append(north)
+				if (y != (length - 1)):
+					directions.append(east)
+				if y != 0:
+					directions.append(west)
+				if (x != (length - 1)):
+					directions.append(south)
+				directions.shuffle()
+				#Explore each direction
+				for i in directions.size():
+					var tryX = x + directions[i][0]
+					var tryY = y + directions[i][1]
+					#Add Tent to Spot if possible.
+					if grid[tryX][tryY] == "Bl":
+						grid[tryX][tryY] = "Te"
+						paint(tryX,tryY,"add")
+						#Mark tree as explored
+						explored.append([x,y])
+						#Continue attemptint to solve with added tree
+						fillTents()
+						if (solution.size() > 0):
+							return
+						#If we return without a solution, undo changes and try another direction.
+						explored.erase([x,y])
+						grid[tryX][tryY] = "Bl"
+						paint(tryX,tryY,"remove")
 				return
-	printGrid(numberTable)
-	return true
+	#If we explore all trees report solution.
+	solution = grid.duplicate(true)
+	print("We found something?")
+	return
 
-func generatePuzzle():
-	recFill()
-	target = 50
-	counter = 0
-	removeNumber()
-	counter = 0
-
-func removeNumber():
-	if counter >= target:
-		return
-	var table = numberTable.duplicate(true)
-	var filledCells = []
-	for x in 9:
-		for y in 9:
-			if numberTable[x][y] != 0:
-				filledCells.append((x * 9) + y)
-	for x in filledCells.size():
-		var index = filledCells[randi() % filledCells.size() - 1]
-		var newX = index / 9
-		var newY = index % 9
-		numberTable[newX][newY] = 0
-		recSolve()
-		if solutions.size() > 1:
-			numberTable = table.duplicate(true)
-			solutions.clear()
-			filledCells.remove(index)
-			continue
-		else:
-			counter += 1
-			removeNumber()
-			if counter >= target:
-				return
-			
+func paint(x,y,mode):
+	#Choose valid directions to explore.
+	var directions = []
+	if x != 0:
+		directions.append(north)
+	if y != (length - 1):
+		directions.append(east)
+	if y != 0: 
+		directions.append(west)
+	if x != (length - 1):
+		directions.append(south)
+	if x != 0 && y != (length - 1):
+		directions.append(northEast)
+	if x != (length - 1) && y != (length - 1):
+		directions.append(southEast)
+	if x != 0 && y != 0:
+		directions.append(northWest)
+	if x != (length - 1) && y != 0:
+		directions.append(southWest)
+	for i in directions.size():
+		var tryX = x + directions[i][0]
+		var tryY = y + directions[i][1]
+		match mode:
+			#If a blank square exists fill with dirt.
+			"add":
+				if grid[tryX][tryY] == "Bl":
+					grid[tryX][tryY] = "Dr"
+			"remove":
+				if grid[tryX][tryY] == "Dr":
+					grid[tryX][tryY] = "Bl"
 	
-			
-		
-func populateTable():
+func createGrid():
+	for x in length:
+		cellTable.append([])
+		for y in length:
+			cellTable[x].append(0)
 	var row_offset = 0
 	var col_offset = 0
 	for x in length:
@@ -234,11 +200,9 @@ func populateTable():
 			cellTable[x][y].position += Vector2(row_offset, col_offset)
 			add_child(cellTable[x][y])
 
-func updateCells():
+func updateGrid():
 	for x in length:
 		for y in length:
-			cellTable[x][y].value = numberTable[x][y]
-	for x in 81:
-		var newX = x / 9
-		var newY = x % 9
-		cellTable[newX][newY].pencil = possibleVal[x]
+			cellTable[x][y].value = grid[x][y]
+	
+						
