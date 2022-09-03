@@ -137,7 +137,7 @@ func fillTents():
 					#Add Tent to Spot if possible.
 					if grid[tryX][tryY] == "Bl":
 						grid[tryX][tryY] = "Te"
-						paint(tryX,tryY,"add")
+						explore(tryX,tryY,"add")
 						#Mark tree as explored
 						explored.append([x,y])
 						#Continue attemptint to solve with added tree
@@ -147,14 +147,14 @@ func fillTents():
 						#If we return without a solution, undo changes and try another direction.
 						explored.erase([x,y])
 						grid[tryX][tryY] = "Bl"
-						paint(tryX,tryY,"remove")
+						explore(tryX,tryY,"remove")
 				return
 	#If we explore all trees report solution.
 	solution = grid.duplicate(true)
 	print("We found something?")
 	return
 
-func paint(x,y,mode):
+func explore(x,y,mode):
 	#Choose valid directions to explore.
 	var directions = []
 	if x != 0:
